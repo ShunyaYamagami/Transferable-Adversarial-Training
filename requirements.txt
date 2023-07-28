@@ -1,0 +1,5 @@
+tensorflow
+tensorlayer
+Pillow
+opencv-python
+matplotlib
