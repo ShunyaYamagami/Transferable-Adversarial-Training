@@ -18,7 +18,7 @@ import logging
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default='office', choices=['office', 'home'])
+parser.add_argument("--dataset", type=str, default='Office31', choices=['Office31', 'OfficeHome'])
 parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=64)
@@ -30,9 +30,9 @@ args.labeled_path = os.path.join(args.checkpoints_dir, 'labeled.pth')
 args.unlabeled_path = os.path.join(args.checkpoints_dir, 'unlabeled.pth')
 # args.test_path = os.path.join(args.checkpoints_dir, 'test.pth')
 
-if args.dataset == 'office':
+if args.dataset == 'Office31':
     args.num_classes = 31
-elif args.dataset == 'home':
+elif args.dataset == 'OfficeHome':
     args.num_classes = 65
 else:
     raise NotImplementedError

@@ -9,16 +9,16 @@ import numpy as np
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default='office', choices=['office', 'home'])
+parser.add_argument("--dataset", type=str, default='Office31', choices=['Office31', 'OfficeHome'])
 parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=512)
 args = parser.parse_args()
 
-args.text_path = f'data/{args.dataset}/{args.task}'
-args.labeled_path = f'data/{args.dataset}/{args.task}/{args.dset}/labeled.txt'
-args.unlabeled_path = f'data/{args.dataset}/{args.task}/{args.dset}/unlabeled.txt'
-args.test_path = f'data/{args.dataset}/{args.task}/{args.dset}/test.txt'
+args.text_path = os.path.join('/nas/data/syamagami/GDA/data/GDA_DA_methods/data', args.dataset, args.task, args.dset)
+args.labeled_path = os.path.join(args.text_path, 'labeled.txt')
+args.unlabeled_path = os.path.join(args.text_path, 'unlabeled.txt')
+args.test_path = os.path.join(args.text_path, 'test.txt')
 
 
 class ImageDataset(Dataset):
