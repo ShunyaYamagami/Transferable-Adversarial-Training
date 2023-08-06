@@ -6,6 +6,7 @@ from torchvision import models, transforms
 from PIL import Image
 from pathlib import Path
 import numpy as np
+from tqdm import tqdm
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -64,7 +65,7 @@ def extract_features(file_path, save_pth):
     features_list = torch.Tensor([])
     classes_list = torch.Tensor([])
     domains_list = torch.Tensor([])
-    for image, label, domain in data_loader:
+    for image, label, domain in tqdm(data_loader):
         image = image.cuda()
 
         with torch.no_grad():

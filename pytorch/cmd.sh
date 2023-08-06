@@ -1,43 +1,82 @@
 function process_args {
     declare -A args
+    # 無名引数数
     local gpu_i=$1
     local exec_num=$2
-    local dset_num=$3
+    local dset_num=$3  # -1の時, 前dsetを実行
+    shift 3  # 無名引数数
 
     # 残りの名前付き引数を解析
-    local dataset="Office31"
-    if [ $dataset = 'Office31' ]; then
+    local parent="OfficeHome"   
+    local task_temp=""    
+    local tmux_session=""
+    local params=$(getopt -n "$0" -o p:t: -l parent:,task:,tmux: -- "$@")
+    eval set -- "$params"
+
+    while true; do
+        case "$1" in
+            -p|--parent)
+                parent="$2"
+                shift 2
+                ;;
+            -t|--task)
+                task_temp="$2"
+                shift 2
+                ;;
+            --tmux)
+                tmux_session="$2"
+                shift 2
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                echo "不明な引数: $1" >&2
+                return 1
+                ;;
+        esac
+    done
+
+    if [ $parent = 'Office31' ]; then
         local task=(
             # "original_uda"
             # "true_domains"
             # "simclr_rpl_uniform_dim512_wght0.5_bs512_ep300_g3_encoder_outdim64_shfl"
             # "simclr_bs512_ep300_g3_shfl"
-            "simple_bs512_ep300_g3_AE_outd64_shfl"
+            # "simple_bs512_ep300_g3_AE_outd64_shfl"
             "contrastive_rpl_dim512_wght0.6_AE_bs256_ep300_outd64_g3"
         )
-    elif [ $dataset = 'OfficeHome' ]; then
+    elif [ $parent = 'OfficeHome' ]; then
         local task=(
             # "original_uda"
             "true_domains"
-            "simclr_rpl_uniform_dim512_wght0.5_bs512_ep300_g3_encoder_outdim64_shfl"
-            "simclr_bs512_ep300_g3_shfl"
+            # "simclr_rpl_dim128_wght0.5_bs512_ep3000_g3_encoder_outdim64_shfl"
+            # "simclr_bs512_ep1000_g3_shfl"
         )
+    fi
+    if [ ! -z "$task_temp" ]; then
+        task=("$task_temp")
     fi
 
     echo "gpu_i: $gpu_i"
     echo "exec_num: $exec_num"
     echo "dset_num: $dset_num"
-    echo -e ''
+    echo "parent: $parent"
+    echo "task: $task"
+    echo -e ''  # (今は使っていないが)改行文字は echo コマンドに -e オプションを付けて実行した場合にのみ機能する.
 
+
+    ###################################################
     ##### データセット設定
-    if [ $dataset = 'Office31' ]; then
-        dsetlist=("amazon_dslr" "webcam_amazon" "dslr_webcam")
-    elif [ $dataset = 'OfficeHome' ]; then
+    if [ $parent = 'Office31' ]; then
+        dsetlist=("amazon_dslr" "webcam_amazon" "dslr_webcam" )
+    elif [ $parent = 'OfficeHome' ]; then
         dsetlist=("Art_Clipart" "Art_Product" "Art_RealWorld" "Clipart_Product" "Clipart_RealWorld" "Product_RealWorld")
-    elif [ $dataset = 'DomainNet' ]; then
+    elif [ $parent = 'DomainNet' ]; then
         dsetlist=('clipart_infograph' 'clipart_painting' 'clipart_quickdraw' 'clipart_real' 'clipart_sketch' 'infograph_painting' 'infograph_quickdraw' 'infograph_real' 'infograph_sketch' 'painting_quickdraw' 'painting_real' 'painting_sketch' 'quickdraw_real' 'quickdraw_sketch' 'real_sketch')
     else
-        echo "不明なデータセット: $dataset" >&2
+        echo "不明なデータセット: $parent" >&2
         return 1
     fi
 
@@ -49,37 +88,37 @@ function process_args {
         if [ $dset_num -eq -1 ]; then
             for dset in "${dsetlist[@]}"; do
                 # 事前にこれを実行する必要がある．
-                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py \
-                    --dataset $dataset \
-                    --task $tsk \
-                    --dset $dset \
-                    --train_batch_size 512"
-                    
-                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py \
-                    --dataset $dataset \
-                    --task $tsk \
-                    --dset $dset \
-                    --train_batch_size 512 "
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 512"
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size 512 "
+            done
+        elif [[ $dset_num == *"_"* ]]; then  # アンダーラインが含まれているかチェック
+            # アンダーラインで文字列を分割
+            IFS='_' read -r -a dset_num_list <<< "$dset_num"
+            # 配列の各要素をfor文でループ
+            for num in "${dset_num_list[@]}"; do
+                dset=${dsetlist[$num]}
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 512"
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 512 "
             done
         else
-            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py \
-                --dataset $dataset \
-                --task $tsk \
-                --dset $dset \
-                --train_batch_size 512"
-
-            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py \
-                --dataset $dataset \
-                --task $tsk \
-                --dset $dset \
-                --train_batch_size 512 "
+            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size 512"
+            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 512 "
         fi
     done
 
+    ###################################################
     ###### 実行. 
     echo $COMMAND
     echo ''
-    eval $COMMAND
+
+    if [ -n "$tmux_session" ]; then
+        # 第3引数が存在する場合の処理. tmux内で実行する. $tmux_sessionはtmuxのセッション名.
+        tmux -2 new -d -s $tmux_session
+        tmux send-key -t $tmux_session.0 "$COMMAND" ENTER
+    else
+        # 第3引数が存在しない場合の処理. そのまま実行.
+        eval $COMMAND
+    fi
 }
 
 # 最初の3つの引数をチェック
