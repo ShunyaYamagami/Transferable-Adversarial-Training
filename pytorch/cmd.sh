@@ -53,6 +53,7 @@ function process_args {
             "true_domains"
             # "simclr_rpl_dim128_wght0.5_bs512_ep3000_g3_encoder_outdim64_shfl"
             # "simclr_bs512_ep1000_g3_shfl"
+            "contrastive_rpl_dim128_wght0.6_AE_bs512_ep3000_outd64_g3"
         )
     fi
     if [ ! -z "$task_temp" ]; then
@@ -80,8 +81,8 @@ function process_args {
         return 1
     fi
 
-    COMMAND=''
-    COMMAND+="conda deactivate && conda deactivate"
+    COMMAND='cd  ~/lab/gda/da/Transferable-Adversarial-Training/pytorch '
+    COMMAND+=" && conda deactivate && conda deactivate"
     COMMAND+=" && conda activate tvt"
 
     for tsk in "${task[@]}"; do
