@@ -18,7 +18,7 @@ import logging
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default='Office31', choices=['Office31', 'OfficeHome'])
+parser.add_argument("--dataset", type=str, default='Office31', choices=['Office31', 'OfficeHome', 'DomainNet'])
 parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=64)
@@ -34,6 +34,8 @@ if args.dataset == 'Office31':
     args.num_classes = 31
 elif args.dataset == 'OfficeHome':
     args.num_classes = 65
+elif args.dataset == 'DomainNet':
+    args.num_classes = 345
 else:
     raise NotImplementedError
 

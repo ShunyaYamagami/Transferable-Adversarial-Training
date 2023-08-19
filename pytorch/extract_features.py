@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default='Office31', choices=['Office31', 'OfficeHome'])
+parser.add_argument("--dataset", type=str, default='Office31', choices=['Office31', 'OfficeHome', 'DomainNet'])
 parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=512)

@@ -55,6 +55,11 @@ function process_args {
             # "simclr_bs512_ep1000_g3_shfl"
             "contrastive_rpl_dim128_wght0.6_AE_bs512_ep3000_outd64_g3"
         )
+    elif [ $parent = 'DomainNet' ]; then
+        local task=(
+            # "original_uda"
+            "true_domains"
+        )
     fi
     if [ ! -z "$task_temp" ]; then
         task=("$task_temp")
@@ -102,6 +107,7 @@ function process_args {
                 COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 512 "
             done
         else
+            dset=${dsetlist[$dset_num]}
             COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size 512"
             COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 512 "
         fi
