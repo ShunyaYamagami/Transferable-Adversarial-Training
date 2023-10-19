@@ -22,7 +22,8 @@ parser.add_argument("--dataset", type=str, default='Office31', choices=['Office3
 parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=64)
-parser.add_argument("--total_epochs", type=int, default=2800)
+# parser.add_argument("--total_epochs", type=int, default=2800)
+parser.add_argument("--total_epochs", type=int, default=1500)
 args = parser.parse_args()
 
 args.checkpoints_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
@@ -32,10 +33,13 @@ args.unlabeled_path = os.path.join(args.checkpoints_dir, 'unlabeled.pth')
 
 if args.dataset == 'Office31':
     args.num_classes = 31
+    every_test_epoch = 10
 elif args.dataset == 'OfficeHome':
     args.num_classes = 65
+    every_test_epoch = 10
 elif args.dataset == 'DomainNet':
     args.num_classes = 345
+    every_test_epoch = 100
 else:
     raise NotImplementedError
 
@@ -49,7 +53,9 @@ now = datetime.now().strftime("%y%m%d_%H:%M:%S")
 log_dir = f'logs/{args.dataset}/{args.task}/{now}--c{cuda}n{exec_num}--{args.dset}--{args.task}'
 set_logger(log_dir)
 logger = logging.getLogger(__name__)
-
+best_log_path = os.path.join(log_dir, 'best.txt')
+latest_model_path = os.path.join(log_dir, 'model_latest.pth')
+best_model_path = os.path.join(log_dir, 'model_best.pth')
 
 cls = CLS(2048, args.num_classes, bottle_neck_dim = 256).cuda()
 discriminator = LargeDiscriminator(2048).cuda()
@@ -69,12 +75,21 @@ def get_dataset(path):
         label[i] = one_hot(args.num_classes, label0[i])
     return image, label, domain
 
+def save_models(model_path, k, best_acc, cls:nn.Module, discriminator:nn.Module):
+    torch.save({
+            'k': k,
+            'best_acc': best_acc,
+            'cls': cls.state_dict(),
+            'discriminator': discriminator.state_dict(),
+            }, model_path)
+
 source_train, source_label, source_domain = get_dataset(args.labeled_path)
 target_train, target_label, target_domain = get_dataset(args.unlabeled_path)
 
 # =====================train
+best_acc = 0.0
 # while k < 2800:
-for k in range(args.total_epochs):
+for k in tqdm(range(args.total_epochs)):
     mini_batches_source = get_mini_batches(source_train, source_label, source_domain, args.train_batch_size)
     mini_batches_target = get_mini_batches(target_train, target_label, target_domain, args.train_batch_size)
     for (i, ((im_source, label_source, domain_source), (im_target, label_target, domain_target))) in enumerate(
@@ -163,15 +178,14 @@ for k in range(args.total_epochs):
             loss = ce  + 0.5 * dloss + 0.5 * dloss_a + ce_extra_c + dis + 0.1 * entropy
             loss.backward()
                         
-    if k % 10 == 0 or k == args.total_epochs:
+    if k % every_test_epoch == 0 or k == args.total_epochs:
         counter = AccuracyCounter()
         counter.addOntBatch(variable_to_numpy(predict_prob_source), variable_to_numpy(label_source))
         acc_train = Variable(torch.from_numpy(np.asarray([counter.reportAccuracy()], dtype=np.float32))).cuda()
         logger.info(f'Epoch[{k:4d}/{args.total_epochs}]')
         track_scalars(logger, ['ce', 'acc_train', 'dis', 'ce_extra_c', 'dloss', 'dloss_a', 'entropy'], globals())
 
-    # ======================test
-    if k % 10 == 0 or k == args.total_epochs:
+        # ======================test
         with TrainingModeManager([cls], train=False) as mgr, Accumulator(['predict_prob','predict_index', 'label']) as accumulator:
             for (i, (im, label, _)) in enumerate(mini_batches_target):
                 with torch.no_grad():
@@ -191,3 +205,11 @@ for k in range(args.total_epochs):
             
         acc = float(np.sum(label.flatten() == predict_index.flatten()) )/ label.flatten().shape[0]
         logger.info(f'Epoch[{k:4d}/{args.total_epochs}]\tAccuracy: {acc:.4f}')
+
+        if round(acc, 4) > round(best_acc, 4):
+            best_acc = acc
+            save_models(best_model_path, k, best_acc, cls, discriminator)
+            with open(best_log_path, 'w') as f:
+                f.write(f'Epoch[{k:4d}/{args.total_epochs}]\nAccuracy: {acc}\n')
+        save_models(latest_model_path, k, best_acc, cls, discriminator)
+
