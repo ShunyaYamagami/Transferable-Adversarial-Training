@@ -23,7 +23,7 @@ parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=64)
 # parser.add_argument("--total_epochs", type=int, default=2800)
-parser.add_argument("--total_epochs", type=int, default=2000)
+parser.add_argument("--total_epochs", type=int, default=1500)
 args = parser.parse_args()
 
 args.checkpoints_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
@@ -88,7 +88,6 @@ target_train, target_label, target_domain = get_dataset(args.unlabeled_path)
 
 # =====================train
 best_acc = 0.0
-# while k < 2800:
 for k in tqdm(range(args.total_epochs)):
     mini_batches_source = get_mini_batches(source_train, source_label, source_domain, args.train_batch_size)
     mini_batches_target = get_mini_batches(target_train, target_label, target_domain, args.train_batch_size)
