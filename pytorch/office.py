@@ -26,7 +26,8 @@ parser.add_argument("--train_batch_size", type=int, default=64)
 parser.add_argument("--total_epochs", type=int, default=1500)
 args = parser.parse_args()
 
-args.checkpoints_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
+# args.checkpoints_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
+args.checkpoints_dir = f'/nas/data/syamagami/GDA/data/Transferable-Adversarial-Training/checkpoints/{args.dataset}/{args.task}/{args.dset}'
 args.labeled_path = os.path.join(args.checkpoints_dir, 'labeled.pth')
 args.unlabeled_path = os.path.join(args.checkpoints_dir, 'unlabeled.pth')
 # args.test_path = os.path.join(args.checkpoints_dir, 'test.pth')

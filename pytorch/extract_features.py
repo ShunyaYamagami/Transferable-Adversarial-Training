@@ -84,7 +84,8 @@ def extract_features(file_path, save_pth):
 
 
 if __name__ == '__main__':
-    save_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
+    # save_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
+    save_dir = f'/nas/data/syamagami/GDA/data/Transferable-Adversarial-Training/checkpoints/{args.dataset}/{args.task}/{args.dset}'
     
     save_pth = os.path.join(save_dir, Path(args.labeled_path).stem+'.pth')
     if not os.path.exists(save_pth):
