@@ -23,7 +23,7 @@ parser.add_argument("--task", type=str, default='true_domains')
 parser.add_argument("--dset", type=str, default='amazon_dslr')
 parser.add_argument("--train_batch_size", type=int, default=64)
 # parser.add_argument("--total_epochs", type=int, default=2800)
-parser.add_argument("--total_epochs", type=int, default=1500)
+parser.add_argument("--total_epochs", type=int, default=2000)
 args = parser.parse_args()
 
 args.checkpoints_dir = f'checkpoints/{args.dataset}/{args.task}/{args.dset}'
