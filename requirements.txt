@@ -3,3 +3,4 @@ tensorlayer
 Pillow
 opencv-python
 matplotlib
+tqdm
