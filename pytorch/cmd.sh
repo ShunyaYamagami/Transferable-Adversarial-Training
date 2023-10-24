@@ -90,12 +90,14 @@ function process_args {
     COMMAND+=" && conda deactivate && conda deactivate"
     COMMAND+=" && conda activate tvt"
 
+    extract_features_train_batch_size=512
+    office_train_batch_size=2048
     for tsk in "${task[@]}"; do
         if [ $dset_num -eq -1 ]; then
             for dset in "${dsetlist[@]}"; do
                 # 事前にこれを実行する必要がある．
-                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 2048"
-                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size 2048 "
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size $extract_features_train_batch_size"
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size $office_train_batch_size"
             done
         elif [[ $dset_num == *"_"* ]]; then  # アンダーラインが含まれているかチェック
             # アンダーラインで文字列を分割
@@ -103,13 +105,13 @@ function process_args {
             # 配列の各要素をfor文でループ
             for num in "${dset_num_list[@]}"; do
                 dset=${dsetlist[$num]}
-                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 2048"
-                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 2048 "
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size $extract_features_train_batch_size"
+                COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size $office_train_batch_size"
             done
         else
             dset=${dsetlist[$dset_num]}
-            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size 2048"
-            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size 2048 "
+            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python extract_features.py   --dataset $parent   --task $tsk   --dset $dset   --train_batch_size $extract_features_train_batch_size"
+            COMMAND+=" && CUDA_VISIBLE_DEVICES=$gpu_i python office.py  --dataset $parent  --task $tsk  --dset $dset  --train_batch_size $office_train_batch_size"
         fi
     done
 
